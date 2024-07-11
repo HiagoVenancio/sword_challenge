@@ -59,6 +59,11 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+
+    // Remove Room dependencies
+    // implementation(libs.androidx.room.common)
+    // implementation(libs.androidx.room.compiler)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -66,4 +71,17 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
+    implementation(libs.insert.koin.koin.android)
+    implementation(libs.koin.androidx.compose)
+
+    implementation(libs.retrofit) {
+        exclude(group = "com.intellij", module = "annotations")
+    }
+    implementation(libs.converter.gson) {
+        exclude(group = "com.intellij", module = "annotations")
+    }
+
+    implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.kotlinx.coroutines.android)
 }
