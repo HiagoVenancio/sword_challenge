@@ -5,7 +5,9 @@ import androidx.lifecycle.viewModelScope
 import com.hrv.swordchallenge.data.CatRepository
 import com.hrv.swordchallenge.ui.model.CatBreedUIModel
 import com.hrv.swordchallenge.util.Resource
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class MainViewModel(private val repository: CatRepository) : ViewModel() {
@@ -14,6 +16,9 @@ class MainViewModel(private val repository: CatRepository) : ViewModel() {
 
     private val _favorites = MutableStateFlow<Resource<List<CatBreedUIModel>>>(Resource.Loading())
     val favorites: StateFlow<Resource<List<CatBreedUIModel>>> get() = _favorites
+
+    private val _errorMessage = MutableStateFlow<String?>(null)
+    val errorMessage: StateFlow<String?> get() = _errorMessage
 
     private var currentPage = 0
 
@@ -30,16 +35,35 @@ class MainViewModel(private val repository: CatRepository) : ViewModel() {
         }
     }
 
+    fun refreshCatBreeds() {
+        currentPage = 0
+        _errorMessage.update {
+            null
+        }
+        viewModelScope.launch {
+            repository.getCatBreeds().collect { resource ->
+                _catBreeds.value = resource
+            }
+        }
+    }
+
     fun loadMoreCatBreeds() {
         viewModelScope.launch {
             currentPage++
             repository.loadMoreCatBreeds(currentPage).collect { resource ->
-                if (resource is Resource.Success) {
-                    val currentBreeds = (_catBreeds.value as? Resource.Success)?.data ?: emptyList()
-                    val updatedBreeds = currentBreeds + (resource.data ?: emptyList())
-                    _catBreeds.value = Resource.Success(updatedBreeds)
-                } else {
-                    _catBreeds.value = resource
+                when (resource) {
+                    is Resource.Error -> {
+                        _errorMessage.value = _catBreeds.value.message
+                    }
+
+                    is Resource.Success -> {
+                        val currentBreeds =
+                            (_catBreeds.value as? Resource.Success)?.data ?: emptyList()
+                        val updatedBreeds = currentBreeds + (resource.data ?: emptyList())
+                        _catBreeds.value = Resource.Success(updatedBreeds)
+                    }
+
+                    else -> {}
                 }
             }
         }
@@ -60,15 +84,6 @@ class MainViewModel(private val repository: CatRepository) : ViewModel() {
                     }
                     fetchFavoriteCatBreeds()
                 }
-            }
-        }
-    }
-
-    fun refreshCatBreeds() {
-        currentPage = 0
-        viewModelScope.launch {
-            repository.getCatBreeds().collect { resource ->
-                _catBreeds.value = resource
             }
         }
     }

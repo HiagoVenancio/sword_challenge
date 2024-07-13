@@ -9,10 +9,10 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface CatBreedDao {
-    @Query("SELECT * FROM cat_breeds")
+    @Query("SELECT * FROM cat_breeds order by name")
     fun getCatBreeds(): Flow<List<CatBreedUIModel>>
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertAll(breeds: List<CatBreedUIModel>)
 
     @Query("DELETE FROM cat_breeds")

@@ -1,5 +1,6 @@
 package com.hrv.swordchallenge.ui.screen
 
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -51,6 +52,7 @@ import kotlinx.coroutines.launch
 fun CatBreedsListScreen(navController: NavController, viewModel: MainViewModel) {
     val catBreeds by viewModel.catBreeds.collectAsState()
     val favorites by viewModel.favorites.collectAsState()
+    val errorMessage by viewModel.errorMessage.collectAsState()
     val listState = rememberLazyGridState()
     val coroutineScope = rememberCoroutineScope()
 
@@ -66,6 +68,17 @@ fun CatBreedsListScreen(navController: NavController, viewModel: MainViewModel) 
                 }
             }
         ) {
+
+            if (errorMessage.isNullOrEmpty().not()) {
+                LaunchedEffect(Unit) {
+                    Toast.makeText(
+                        navController.context,
+                        errorMessage,
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
+
             when (catBreeds) {
                 is Resource.Loading -> {
                     Box(
@@ -103,13 +116,25 @@ fun CatBreedsListScreen(navController: NavController, viewModel: MainViewModel) 
                 }
 
                 is Resource.Error -> {
-                    // Show error state
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
+                    /*LazyVerticalGrid(
+                        state = listState,
+                        columns = GridCells.Fixed(2),
+                        contentPadding = PaddingValues(16.dp),
+                        modifier = Modifier.fillMaxSize()
                     ) {
-                        Text(text = "Error: ${catBreeds.message}")
-                    }
+                        items(catBreeds.data ?: emptyList()) { breed ->
+                            CatBreedItem(
+                                breed = breed,
+                                onClick = {
+                                    navController.navigate(Screen.CatBreedDetail.route + "/${breed.id}")
+                                },
+                                onFavoriteToggle = {
+                                    viewModel.toggleFavorite(breed)
+                                },
+                                isFavorite = breed.isFavorite
+                            )
+                        }
+                    }*/
                 }
             }
         }
