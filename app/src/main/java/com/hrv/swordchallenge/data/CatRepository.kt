@@ -42,7 +42,6 @@ class CatRepository(
                     imageUrl = image?.url
                 )
             }
-            dao.deleteAll()
             dao.insertAll(breedsWithImages)
             emit(Resource.Success(breedsWithImages))
         } catch (e: Exception) {
@@ -76,4 +75,26 @@ class CatRepository(
             emit(Resource.Error(e.localizedMessage ?: "An error occurred"))
         }
     }
+
+    fun toggleFavorite(catBreed: CatBreedUIModel) = flow {
+        try {
+            dao.updateFavoriteStatus(catBreed.id, !catBreed.isFavorite)
+            val updatedBreeds = dao.getCatBreeds().first()
+            emit(Resource.Success(updatedBreeds))
+        } catch (e: Exception) {
+            emit(Resource.Error(e.localizedMessage ?: "An error occurred"))
+        }
+    }
+
+    fun getFavoriteCatBreeds(): Flow<Resource<List<CatBreedUIModel>>> = flow {
+        emit(Resource.Loading())
+        try {
+            val favorites = dao.getFavoriteCatBreeds().first()
+            emit(Resource.Success(favorites))
+        } catch (e: Exception) {
+            emit(Resource.Error(e.localizedMessage ?: "An error occurred"))
+        }
+    }
+
+
 }

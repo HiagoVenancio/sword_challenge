@@ -17,4 +17,10 @@ interface CatBreedDao {
 
     @Query("DELETE FROM cat_breeds")
     suspend fun deleteAll()
+
+    @Query("UPDATE cat_breeds SET isFavorite = :isFavorite WHERE id = :id")
+    suspend fun updateFavoriteStatus(id: String, isFavorite: Boolean)
+
+    @Query("SELECT * FROM cat_breeds WHERE isFavorite = 1")
+    fun getFavoriteCatBreeds(): Flow<List<CatBreedUIModel>>
 }

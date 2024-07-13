@@ -1,6 +1,5 @@
 package com.hrv.swordchallenge.ui
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.hrv.swordchallenge.data.CatRepository
@@ -13,32 +12,25 @@ class MainViewModel(private val repository: CatRepository) : ViewModel() {
     private val _catBreeds = MutableStateFlow<Resource<List<CatBreedUIModel>>>(Resource.Loading())
     val catBreeds: StateFlow<Resource<List<CatBreedUIModel>>> get() = _catBreeds
 
-    private val _favorites = MutableStateFlow<Set<String>>(emptySet())
-    val favorites: StateFlow<Set<String>> get() = _favorites
+    private val _favorites = MutableStateFlow<Resource<List<CatBreedUIModel>>>(Resource.Loading())
+    val favorites: StateFlow<Resource<List<CatBreedUIModel>>> get() = _favorites
 
     private var currentPage = 0
 
     init {
         fetchCatBreeds()
+        fetchFavoriteCatBreeds()
     }
 
     private fun fetchCatBreeds() {
         viewModelScope.launch {
             repository.getCatBreeds().collect { resource ->
-                if (resource is Resource.Success) {
-                    val breeds = resource.data?.map { breed ->
-                        breed.copy(isFavorite = _favorites.value.contains(breed.id))
-                    }
-                    _catBreeds.value = Resource.Success(breeds ?: emptyList())
-                } else {
-                    _catBreeds.value = resource
-                }
+                _catBreeds.value = resource
             }
         }
     }
 
     fun loadMoreCatBreeds() {
-        Log.e("asdasd", "Chamei")
         viewModelScope.launch {
             currentPage++
             repository.loadMoreCatBreeds(currentPage).collect { resource ->
@@ -54,25 +46,42 @@ class MainViewModel(private val repository: CatRepository) : ViewModel() {
     }
 
     fun toggleFavorite(breed: CatBreedUIModel) {
-        _favorites.update { currentFavorites ->
-            if (currentFavorites.contains(breed.id)) {
-                currentFavorites - breed.id
-            } else {
-                currentFavorites + breed.id
+        viewModelScope.launch {
+            repository.toggleFavorite(breed).collect { resource ->
+                if (resource is Resource.Success) {
+                    _catBreeds.update { catBreedsResource ->
+                        if (catBreedsResource is Resource.Success) {
+                            Resource.Success(catBreedsResource.data?.map {
+                                if (it.id == breed.id) it.copy(isFavorite = !it.isFavorite) else it
+                            } ?: emptyList())
+                        } else {
+                            catBreedsResource
+                        }
+                    }
+                    fetchFavoriteCatBreeds()
+                }
             }
         }
-        _catBreeds.update { resource ->
-            if (resource is Resource.Success) {
-                Resource.Success(resource.data?.map {
-                    if (it.id == breed.id) it.copy(isFavorite = !it.isFavorite) else it
-                } ?: emptyList())
-            } else {
-                resource
+    }
+
+    fun refreshCatBreeds() {
+        currentPage = 0
+        viewModelScope.launch {
+            repository.getCatBreeds().collect { resource ->
+                _catBreeds.value = resource
+            }
+        }
+    }
+
+    fun fetchFavoriteCatBreeds() {
+        viewModelScope.launch {
+            repository.getFavoriteCatBreeds().collect { resource ->
+                _favorites.value = resource
             }
         }
     }
 
     fun isFavorite(breed: CatBreedUIModel): Boolean {
-        return _favorites.value.contains(breed.id)
+        return (_favorites.value as? Resource.Success)?.data?.any { it.id == breed.id } ?: false
     }
 }

@@ -20,6 +20,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -30,71 +31,85 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.rememberImagePainter
+import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.hrv.swordchallenge.ui.MainViewModel
 import com.hrv.swordchallenge.ui.model.CatBreedUIModel
 import com.hrv.swordchallenge.ui.navigation.Screen
 import com.hrv.swordchallenge.util.Resource
+import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CatBreedsListScreen(navController: NavController, viewModel: MainViewModel) {
     val catBreeds by viewModel.catBreeds.collectAsState()
     val favorites by viewModel.favorites.collectAsState()
     val listState = rememberLazyGridState()
+    val coroutineScope = rememberCoroutineScope()
 
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
     ) {
-        when (catBreeds) {
-            is Resource.Loading -> {
-                // Show loading state
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
+        SwipeRefresh(
+            state = rememberSwipeRefreshState(isRefreshing = catBreeds is Resource.Loading),
+            onRefresh = {
+                coroutineScope.launch {
+                    viewModel.refreshCatBreeds()
                 }
             }
-
-            is Resource.Success -> {
-                LazyVerticalGrid(
-                    state = listState,
-                    columns = GridCells.Fixed(2),
-                    contentPadding = PaddingValues(16.dp),
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    items(catBreeds.data ?: emptyList()) { breed ->
-                        CatBreedItem(
-                            breed = breed,
-                            onClick = {
-                                navController.navigate(Screen.CatBreedDetail.route + "/${breed.id}")
-                            },
-                            onFavoriteToggle = {
-                                viewModel.toggleFavorite(breed)
-                            },
-                            isFavorite = breed.isFavorite
-                        )
+        ) {
+            when (catBreeds) {
+                is Resource.Loading -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
                     }
                 }
 
-                listState.OnBottomReached {
-                    viewModel.loadMoreCatBreeds()
-                }
-            }
+                is Resource.Success -> {
+                    LazyVerticalGrid(
+                        state = listState,
+                        columns = GridCells.Fixed(2),
+                        contentPadding = PaddingValues(16.dp),
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        items(catBreeds.data ?: emptyList()) { breed ->
+                            CatBreedItem(
+                                breed = breed,
+                                onClick = {
+                                    navController.navigate(Screen.CatBreedDetail.route + "/${breed.id}")
+                                },
+                                onFavoriteToggle = {
+                                    viewModel.toggleFavorite(breed)
+                                },
+                                isFavorite = breed.isFavorite
+                            )
+                        }
+                    }
 
-            is Resource.Error -> {
-                // Show error state
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(text = "Error: ${catBreeds.message}")
+                    listState.OnBottomReached {
+                        viewModel.loadMoreCatBreeds()
+                    }
+                }
+
+                is Resource.Error -> {
+                    // Show error state
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(text = "Error: ${catBreeds.message}")
+                    }
                 }
             }
         }

@@ -2,14 +2,7 @@ package com.hrv.swordchallenge.ui.screen
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
@@ -39,6 +32,7 @@ fun CatBreedDetailScreen(
     val breedId = backStackEntry.arguments?.getString("breedId") ?: return
     val catBreeds by viewModel.catBreeds.collectAsState()
     val breed = catBreeds.data?.find { it.id == breedId }
+    val isFavorite = breed?.let { viewModel.isFavorite(it) } ?: false
 
     breed?.let {
         Surface(
@@ -94,7 +88,6 @@ fun CatBreedDetailScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.padding(top = 16.dp)
                 ) {
-                    val isFavorite = viewModel.isFavorite(it)
                     Text(
                         text = if (isFavorite) "Unfavorite" else "Favorite",
                         style = MaterialTheme.typography.bodyLarge,

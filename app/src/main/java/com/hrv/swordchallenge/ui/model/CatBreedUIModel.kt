@@ -13,7 +13,7 @@ data class CatBreedUIModel(
     val countryCode: String,
     val description: String,
     val imageUrl: String?,
-    val isFavorite: Boolean = false
+    var isFavorite: Boolean = false
 ) {
     companion object {
         const val CAT_BREED_TABLE = "cat_breeds"
