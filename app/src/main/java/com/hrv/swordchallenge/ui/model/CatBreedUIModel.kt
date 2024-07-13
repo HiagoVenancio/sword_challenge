@@ -1,7 +1,12 @@
 package com.hrv.swordchallenge.ui.model
 
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+import com.hrv.swordchallenge.ui.model.CatBreedUIModel.Companion.CAT_BREED_TABLE
+
+@Entity(tableName = CAT_BREED_TABLE)
 data class CatBreedUIModel(
-    val id: String,
+    @PrimaryKey val id: String,
     val name: String,
     val temperament: String,
     val origin: String,
@@ -9,4 +14,8 @@ data class CatBreedUIModel(
     val description: String,
     val imageUrl: String?,
     val isFavorite: Boolean = false
-)
+) {
+    companion object {
+        const val CAT_BREED_TABLE = "cat_breeds"
+    }
+}
