@@ -60,6 +60,8 @@ fun FavoriteCatsScreen(navController: NavController, viewModel: MainViewModel) {
             is Resource.Error -> {
                 Text(text = "Error: ${favorites.message}")
             }
+
+            else -> {}
         }
     }
 }

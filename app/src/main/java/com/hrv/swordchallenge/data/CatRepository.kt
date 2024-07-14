@@ -16,19 +16,15 @@ class CatRepository(
 ) {
 
     companion object {
-        const val PAGE_SIZE = 20
+        const val LIMIT_SIZE = 15
     }
 
     fun getCatBreeds(refreshWithLoad: Boolean = false): Flow<Resource<List<CatBreedUIModel>>> =
         flow {
             if (refreshWithLoad) emit(Resource.Loading())
             try {
-                val localBreeds = dao.getCatBreeds().first()
-                if (localBreeds.isNotEmpty()) {
-                    emit(Resource.Success(localBreeds))
-                }
-                val breeds = api.getCatBreeds(PAGE_SIZE, 0)
-                val breedsWithImages = breeds.map { breed ->
+                val breeds = api.getCatBreeds(LIMIT_SIZE, 0)
+                val breedsWithImages = breeds?.map { breed ->
                     var image: CatImage? = null
                     if (breed.reference_image_id.isNullOrEmpty().not()) {
                         image = api.getCatImage(breed.reference_image_id ?: "")
@@ -44,8 +40,10 @@ class CatRepository(
                         imageUrl = image?.url
                     )
                 }
-                dao.insertAll(breedsWithImages)
-                emit(Resource.Success(dao.getCatBreeds().first()))
+                breedsWithImages?.let {
+                    dao.insertAll(breedsWithImages)
+                    emit(Resource.Success(dao.getCatBreeds().first()))
+                }
             } catch (e: Exception) {
                 Log.e("Error", e.localizedMessage ?: "An error occurred")
             }
@@ -53,7 +51,11 @@ class CatRepository(
 
     fun loadMoreCatBreeds(page: Int): Flow<Resource<List<CatBreedUIModel>>> = flow {
         try {
-            val breeds = api.getCatBreeds(PAGE_SIZE, page)
+            val breeds = api.getCatBreeds(LIMIT_SIZE, page)
+            if (breeds.isNullOrEmpty()) {
+                emit(Resource.Message(null, "No more cats to fetch"))
+                return@flow
+            }
             val breedsWithImages = breeds.map { breed ->
                 var image: CatImage? = null
                 if (breed.reference_image_id.isNullOrEmpty().not()) {
@@ -70,9 +72,12 @@ class CatRepository(
                     imageUrl = image?.url
                 )
             }
-            dao.insertAll(breedsWithImages)
-            val updatedBreeds = dao.getCatBreeds().first()
-            emit(Resource.Success(updatedBreeds))
+
+            if (breedsWithImages.isNotEmpty()) {
+                dao.insertAll(breedsWithImages)
+                val updatedBreeds = dao.getCatBreeds().first()
+                emit(Resource.Success(updatedBreeds))
+            }
         } catch (e: Exception) {
             emit(Resource.Error(e.localizedMessage ?: "An error occurred"))
         }
@@ -97,6 +102,4 @@ class CatRepository(
             emit(Resource.Error(e.localizedMessage ?: "An error occurred"))
         }
     }
-
-
 }

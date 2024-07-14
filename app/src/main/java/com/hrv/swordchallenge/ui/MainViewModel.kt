@@ -17,10 +17,10 @@ class MainViewModel(private val repository: CatRepository) : ViewModel() {
     private val _favorites = MutableStateFlow<Resource<List<CatBreedUIModel>>>(Resource.Loading())
     val favorites: StateFlow<Resource<List<CatBreedUIModel>>> get() = _favorites
 
-    private val _errorMessage = MutableStateFlow<String?>(null)
-    val errorMessage: StateFlow<String?> get() = _errorMessage
+    private val _message = MutableStateFlow<String?>(null)
+    val message: StateFlow<String?> get() = _message
 
-    private var currentPage = 0
+    private val currentPage = MutableStateFlow<Int>(0)
 
     init {
         fetchCatBreeds()
@@ -36,10 +36,8 @@ class MainViewModel(private val repository: CatRepository) : ViewModel() {
     }
 
     fun refreshCatBreeds() {
-        currentPage = 0
-        _errorMessage.update {
-            null
-        }
+        currentPage.value = 0
+        _message.value = null
         viewModelScope.launch {
             repository.getCatBreeds().collect { resource ->
                 _catBreeds.value = resource
@@ -49,23 +47,34 @@ class MainViewModel(private val repository: CatRepository) : ViewModel() {
 
     fun loadMoreCatBreeds() {
         viewModelScope.launch {
-            currentPage++
-            repository.loadMoreCatBreeds(currentPage).collect { resource ->
+            currentPage.value = (currentPage.value + 1)
+            repository.loadMoreCatBreeds(currentPage.value).collect { resource ->
                 when (resource) {
                     is Resource.Error -> {
-                        _errorMessage.value = _catBreeds.value.message
+                        _message.value = _catBreeds.value.message
                     }
 
                     is Resource.Success -> {
                         val currentBreeds =
                             (_catBreeds.value as? Resource.Success)?.data ?: emptyList()
-                        val updatedBreeds = currentBreeds + (resource.data ?: emptyList())
-                        _catBreeds.value = Resource.Success(updatedBreeds)
+                        val newBreeds = resource.data ?: emptyList()
+
+                        if (newBreeds.isEmpty()) {
+                            _message.value = "No more cats to fetch"
+                        } else {
+                            val updatedBreeds = (currentBreeds + newBreeds).distinctBy { it.id }
+                            _catBreeds.value = Resource.Success(updatedBreeds)
+                        }
+                    }
+
+                    is Resource.Message -> {
+                        _message.value = _catBreeds.value.message
                     }
 
                     else -> {}
                 }
             }
+
         }
     }
 

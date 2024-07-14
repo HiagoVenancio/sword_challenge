@@ -21,7 +21,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -47,12 +46,10 @@ import com.hrv.swordchallenge.ui.navigation.Screen
 import com.hrv.swordchallenge.util.Resource
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CatBreedsListScreen(navController: NavController, viewModel: MainViewModel) {
     val catBreeds by viewModel.catBreeds.collectAsState()
-    val favorites by viewModel.favorites.collectAsState()
-    val errorMessage by viewModel.errorMessage.collectAsState()
+    val errorMessage by viewModel.message.collectAsState()
     val listState = rememberLazyGridState()
     val coroutineScope = rememberCoroutineScope()
 
@@ -68,16 +65,6 @@ fun CatBreedsListScreen(navController: NavController, viewModel: MainViewModel) 
                 }
             }
         ) {
-
-            if (errorMessage.isNullOrEmpty().not()) {
-                LaunchedEffect(Unit) {
-                    Toast.makeText(
-                        navController.context,
-                        errorMessage,
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-            }
 
             when (catBreeds) {
                 is Resource.Loading -> {
@@ -115,27 +102,15 @@ fun CatBreedsListScreen(navController: NavController, viewModel: MainViewModel) 
                     }
                 }
 
-                is Resource.Error -> {
-                    /*LazyVerticalGrid(
-                        state = listState,
-                        columns = GridCells.Fixed(2),
-                        contentPadding = PaddingValues(16.dp),
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        items(catBreeds.data ?: emptyList()) { breed ->
-                            CatBreedItem(
-                                breed = breed,
-                                onClick = {
-                                    navController.navigate(Screen.CatBreedDetail.route + "/${breed.id}")
-                                },
-                                onFavoriteToggle = {
-                                    viewModel.toggleFavorite(breed)
-                                },
-                                isFavorite = breed.isFavorite
-                            )
-                        }
-                    }*/
-                }
+                is Resource.Error -> {}
+                is Resource.Message -> {}
+            }
+            if (errorMessage.isNullOrEmpty().not()) {
+                Toast.makeText(
+                    navController.context,
+                    errorMessage,
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         }
     }
