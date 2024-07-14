@@ -30,7 +30,7 @@ class MainViewModel(private val repository: CatRepository) : ViewModel() {
         fetchFavoriteCatBreeds()
     }
 
-    private fun fetchCatBreeds() {
+    fun fetchCatBreeds() {
         _loading.value = true
         viewModelScope.launch {
             repository.getCatBreeds().collect { resource ->

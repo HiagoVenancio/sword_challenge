@@ -63,6 +63,8 @@ dependencies {
 
     // Room dependencies
     implementation(libs.androidx.room.runtime)
+    testImplementation(libs.junit.junit)
+    testImplementation(libs.junit.junit)
     //noinspection KaptUsageInsteadOfKsp
     kapt(libs.androidx.room.compiler)
     implementation(libs.androidx.room.ktx)
@@ -91,4 +93,12 @@ dependencies {
     implementation(libs.coil.compose)
     implementation(libs.accompanist.swiperefresh)
 
+    testImplementation(libs.androidx.core.testing)
+    testImplementation(libs.kotlin.test.junit)
+    testImplementation(libs.mockito.core.v3112)
+    testImplementation(libs.mockito.kotlin.v320)
+    testImplementation(libs.kotlinx.coroutines.test.v160)
+    testImplementation(libs.google.truth)
+
+    testImplementation(libs.google.truth)
 }
