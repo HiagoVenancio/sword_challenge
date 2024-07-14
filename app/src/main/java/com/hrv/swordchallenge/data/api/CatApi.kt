@@ -20,4 +20,8 @@ interface CatApi {
     @GET("v1/images/{image_id}")
     suspend fun getCatImage(@Path("image_id") imageId: String): CatImage
 
+    @Headers("x-api-key: live_I7o5DrxsMrTKhA8qOCHpTUsWDDpC7nUDcA1rn6bIWjYsWg02TJ7UAv5iOIsTxYA5")
+    @GET("v1/breeds/search")
+    suspend fun searchCatBreeds(@Query("q") query: String): List<CatBreed>?
+
 }

@@ -20,6 +20,9 @@ class MainViewModel(private val repository: CatRepository) : ViewModel() {
     private val _message = MutableStateFlow<String?>(null)
     val message: StateFlow<String?> get() = _message
 
+    private val _loading = MutableStateFlow(false)
+    val loading: StateFlow<Boolean> get() = _loading
+
     private val currentPage = MutableStateFlow<Int>(0)
 
     init {
@@ -28,19 +31,23 @@ class MainViewModel(private val repository: CatRepository) : ViewModel() {
     }
 
     private fun fetchCatBreeds() {
+        _loading.value = true
         viewModelScope.launch {
             repository.getCatBreeds().collect { resource ->
                 _catBreeds.value = resource
+                _loading.value = false
             }
         }
     }
 
-    fun refreshCatBreeds() {
+    fun refreshCatBreeds(shouldShowLoad: Boolean = false) {
         currentPage.value = 0
         _message.value = null
+        _loading.value = true
         viewModelScope.launch {
-            repository.getCatBreeds().collect { resource ->
+            repository.getCatsFromDatabase().collect { resource ->
                 _catBreeds.value = resource
+                _loading.value = false
             }
         }
     }
@@ -74,7 +81,6 @@ class MainViewModel(private val repository: CatRepository) : ViewModel() {
                     else -> {}
                 }
             }
-
         }
     }
 
@@ -107,5 +113,15 @@ class MainViewModel(private val repository: CatRepository) : ViewModel() {
 
     fun isFavorite(breed: CatBreedUIModel): Boolean {
         return (_favorites.value as? Resource.Success)?.data?.any { it.id == breed.id } ?: false
+    }
+
+    fun updateSearchQuery(query: String) {
+        _loading.value = true
+        viewModelScope.launch {
+            repository.searchCatBreeds(query).collect { resource ->
+                _catBreeds.value = resource
+                _loading.value = false
+            }
+        }
     }
 }

@@ -1,6 +1,5 @@
 package com.hrv.swordchallenge.data
 
-import android.util.Log
 import com.hrv.swordchallenge.data.api.CatApi
 import com.hrv.swordchallenge.data.dao.CatBreedDao
 import com.hrv.swordchallenge.data.model.CatImage
@@ -45,9 +44,45 @@ class CatRepository(
                     emit(Resource.Success(dao.getCatBreeds().first()))
                 }
             } catch (e: Exception) {
-                Log.e("Error", e.localizedMessage ?: "An error occurred")
+                emit(Resource.Error(e.localizedMessage ?: "An error occurred"))
             }
         }
+
+    fun getCatsFromDatabase(): Flow<Resource<List<CatBreedUIModel>>> =
+        flow {
+            emit(Resource.Success(dao.getCatBreeds().first()))
+        }
+
+    fun searchCatBreeds(query: String): Flow<Resource<List<CatBreedUIModel>>> = flow {
+        emit(Resource.Loading())
+        try {
+            val breeds = api.searchCatBreeds(query)
+            if (breeds.isNullOrEmpty()) {
+                emit(Resource.Success(emptyList()))
+                return@flow
+            }
+
+            val breedsWithImages = breeds.map { breed ->
+                var image: CatImage? = null
+                if (breed.reference_image_id.isNullOrEmpty().not()) {
+                    image = api.getCatImage(breed.reference_image_id ?: "")
+                }
+
+                CatBreedUIModel(
+                    id = breed.id,
+                    name = breed.name,
+                    temperament = breed.temperament,
+                    origin = breed.origin,
+                    countryCode = breed.country_code,
+                    description = breed.description,
+                    imageUrl = image?.url
+                )
+            }
+            emit(Resource.Success(breedsWithImages))
+        } catch (e: Exception) {
+            emit(Resource.Error(e.localizedMessage ?: "An error occurred"))
+        }
+    }
 
     fun loadMoreCatBreeds(page: Int): Flow<Resource<List<CatBreedUIModel>>> = flow {
         try {
