@@ -36,7 +36,8 @@ class CatRepository(
                         origin = breed.origin,
                         countryCode = breed.country_code,
                         description = breed.description,
-                        imageUrl = image?.url
+                        imageUrl = image?.url,
+                        isFavorite = dao.isFavorite(breed.id)
                     )
                 }
                 breedsWithImages?.let {
@@ -75,7 +76,8 @@ class CatRepository(
                     origin = breed.origin,
                     countryCode = breed.country_code,
                     description = breed.description,
-                    imageUrl = image?.url
+                    imageUrl = image?.url,
+                    isFavorite = dao.isFavorite(breed.id)
                 )
             }
             emit(Resource.Success(breedsWithImages))
@@ -104,7 +106,8 @@ class CatRepository(
                     origin = breed.origin,
                     countryCode = breed.country_code,
                     description = breed.description,
-                    imageUrl = image?.url
+                    imageUrl = image?.url,
+                    isFavorite = dao.isFavorite(breed.id)
                 )
             }
 

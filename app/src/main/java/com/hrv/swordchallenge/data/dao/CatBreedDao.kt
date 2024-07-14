@@ -23,4 +23,7 @@ interface CatBreedDao {
 
     @Query("SELECT * FROM cat_breeds WHERE isFavorite = 1")
     fun getFavoriteCatBreeds(): Flow<List<CatBreedUIModel>>
+
+    @Query("SELECT isFavorite FROM cat_breeds WHERE id = :id")
+    suspend fun isFavorite(id: String): Boolean
 }
